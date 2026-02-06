@@ -25,7 +25,6 @@
           "refId": "A"
         }
       ],
-      "description": "If your app uses a different metric name, replace http_requests_total with your metric (eg. http_server_requests_seconds_count or similar).",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 }
     },
     {
@@ -50,7 +49,6 @@
           "refId": "A"
         }
       ],
-      "description": "Replace histogram metric name if your instrumentation uses a different name (eg. http_server_request_duration_seconds_bucket).",
       "gridPos": { "x": 12, "y": 6, "w": 12, "h": 6 }
     }
   ],

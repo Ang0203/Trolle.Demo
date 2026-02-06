@@ -25,7 +25,6 @@
           "refId": "A"
         }
       ],
-      "description": "Metric depends on Prometheus scrape rules. Remove or replace if not present in your metrics.",
       "gridPos": { "x": 0, "y": 6, "w": 24, "h": 6 }
     }
   ],

@@ -8,7 +8,7 @@
   "panels": [
     {
       "type": "logs",
-      "title": "Recent logs (app=Trolle.API)",
+      "title": "Recent logs",
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
@@ -25,7 +25,7 @@
     },
     {
       "type": "logs",
-      "title": "All logs (no filter)",
+      "title": "All logs",
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         { "expr": "{}", "refId": "A" }
