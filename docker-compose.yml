@@ -1,0 +1,153 @@
+services:
+  postgres:
+    image: postgres:15-bookworm
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=trolledb
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale-provider=icu --icu-locale=und
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -h localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - trolle-network
+
+  backend:
+    image: angtj/trolle-backend:latest
+    container_name: trolle_backend
+    ports:
+      - "2207:2207"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:2207
+      - AllowedHosts=*
+      # CORS
+      - Cors__AllowedOrigins__0=http://localhost:2208
+      # Database
+      - Database__ConnectionString=Host=postgres;Port=5432;Database=trolledb;Username=postgres;Password=postgres;SSL Mode=Disable
+      - Database__MaxRetries=10
+      - Database__DelaySeconds=3
+      # SignalR
+      - SignalR__BoardHubPath=/hubs/board
+      # Swagger
+      - Swagger__Title=Trolle API
+      - Swagger__Version=v1
+      - Swagger__Description=Trello clone API (Dev)
+      # OpenTelemetry
+      - OpenTelemetry__Endpoint=http://tempo:4317
+      - OpenTelemetry__ServiceName=Trolle.API
+      # Serilog: minimum level + overrides
+      - Serilog__MinimumLevel__Default=Information
+      - Serilog__MinimumLevel__Override__Microsoft=Warning
+      - Serilog__MinimumLevel__Override__System=Warning
+      # Serilog: Loki sink
+      - Serilog__WriteTo__0__Name=Loki
+      - Serilog__WriteTo__0__Args__serverUrl=http://loki:3100
+      - Serilog__WriteTo__0__Args__labels__0__key=app
+      - Serilog__WriteTo__0__Args__labels__0__value=Trolle.API
+      # Serilog: enrichers
+      - Serilog__Enrich__0=FromLogContext
+      - Serilog__Enrich__1=WithMachineName
+      - Serilog__Enrich__2=WithThreadId
+      - Serilog__Properties__Application=Trolle.API
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:2207/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    depends_on:
+      postgres:
+       condition: service_healthy
+    networks:
+      - trolle-network
+
+  frontend:
+    image: angtj/trolle-frontend:latest
+    container_name: trolle_frontend
+    ports:
+      - "2208:2208"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:2207/api
+    depends_on:
+      backend:
+       condition: service_healthy
+    networks:
+      - trolle-network
+
+  loki:
+    image: grafana/loki:2.9.1
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command:
+      - -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./configs/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    networks:
+      - trolle-network
+
+  prometheus:
+    image: prom/prometheus:v2.47.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=10GB
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - trolle-network
+
+  tempo:
+    image: grafana/tempo:2.2.3
+    container_name: tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317" # OTLP gRPC receiver
+    command: ["tempo", "-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./configs/tempo.yml:/etc/tempo.yaml:ro
+      - tempo_data:/tmp/tempo
+    networks:
+      - trolle-network
+
+  grafana:
+    image: grafana/grafana:10.1.5
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+    - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - trolle-network
+
+networks:
+  trolle-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  loki_data:
+  prometheus_data:
+  tempo_data:

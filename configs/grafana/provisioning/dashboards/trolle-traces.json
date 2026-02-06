@@ -1,0 +1,34 @@
+{
+  "id": null,
+  "uid": "tempo",
+  "title": "Trolle - Traces",
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "text",
+      "title": "Open Traces in Explore",
+      "options": {
+        "content": "### View Traces\n\nOpen **Explore** → choose the **Tempo** datasource, and search for services.\n\nOr click this link to Explore (adjust timeframe):\n\n`/explore?left=%7B%22datasource%22%3A%22tempo%22%7D`\n\nIf your traces don't appear, generate some traffic (hit the backend API) and then search again.",
+        "mode": "markdown"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 6 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Tempo: traces received (example metric)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(tempo_received_spans_total[1m]))",
+          "refId": "A"
+        }
+      ],
+      "description": "Metric depends on Prometheus scrape rules. Remove or replace if not present in your metrics.",
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 6 }
+    }
+  ],
+  "templating": { "list": [] },
+  "refresh": "10s"
+}

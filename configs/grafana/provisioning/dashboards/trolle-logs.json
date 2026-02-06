@@ -1,0 +1,49 @@
+{
+  "id": null,
+  "uid": "loki",
+  "title": "Trolle - Logs",
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Recent logs (app=Trolle.API)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{app=\"Trolle.API\"}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": true,
+        "wrapLines": false,
+        "dedupStrategy": "none"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 12 }
+    },
+    {
+      "type": "logs",
+      "title": "All logs (no filter)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "expr": "{}", "refId": "A" }
+      ],
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "app",
+        "query": "label_values({app!=\"\"}, app)",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "label": "app",
+        "current": { "text": "Trolle.API", "value": "Trolle.API" }
+      }
+    ]
+  },
+  "refresh": "5s"
+}
